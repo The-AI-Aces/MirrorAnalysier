@@ -3,6 +3,7 @@ import urllib.parse
 import json
 import sys
 import time
+import os
 
 def make_request(url, method="GET", headers=None, body=None):
     if headers is None:
@@ -27,12 +28,24 @@ def make_request(url, method="GET", headers=None, body=None):
         return 0, str(e)
 
 def main():
-    if len(sys.argv) < 2:
-        print("[ERROR] Render API Key is required.")
+    api_key = None
+    if len(sys.argv) >= 2:
+        api_key = sys.argv[1]
+    else:
+        # Load from ~/.env
+        env_path = os.path.expanduser("~/.env")
+        if os.path.exists(env_path):
+            with open(env_path, "r") as f:
+                for line in f:
+                    if line.strip().startswith("RENDER_API_KEY="):
+                        api_key = line.split("=", 1)[1].strip()
+                        break
+                        
+    if not api_key:
+        print("[ERROR] Render API Key not found. Please provide it as a CLI argument or save it to ~/.env")
         print("Usage: python deploy_render.py <RENDER_API_KEY>")
         sys.exit(1)
         
-    api_key = sys.argv[1]
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Accept": "application/json"
@@ -69,7 +82,7 @@ def main():
         service_id = existing_service['id']
         live_url = existing_service['url']
         print(f"Service '{service_name}' already exists (ID: {service_id}). URL: {live_url}")
-        print("Triggering a new deployment to push the latest TFLite changes...")
+        print("Triggering a new deployment to push the latest changes...")
         deploy_status, deploy_res = make_request(
             f"https://api.render.com/v1/services/{service_id}/deploys",
             method="POST",
@@ -118,7 +131,6 @@ def main():
     last_status = None
     
     while True:
-        # Prevent infinite polling
         if time.time() - start_time > 600: # 10 minutes timeout
             print("\n[TIMEOUT] Deployment monitoring timed out. The build may still be running on Render.")
             print(f"Please check the Render Dashboard: https://dashboard.render.com/web/{service_id}")
