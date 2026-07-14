@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirror Analyzer Pro — MediTrack AI</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">Mirror <span class="logo-accent">Analyzer</span></span>
+      <span class="subtitle">AI-Powered Patient Monitoring</span>
+    </div>
+    
+    <div class="header-center">
+      <div class="live-indicator">
+        <span class="pulse-dot"></span>
+        <span class="live-text">LIVE DIAGNOSTICS</span>
+      </div>
+      <div class="header-stats">
+        <span class="stat-item"><span class="label">Session:</span> <span class="val" id="session">00:00:00</span></span>
+        <span class="stat-item"><span class="label">FPS:</span> <span class="val" id="fps">0.0</span></span>
+        <span class="stat-item"><span class="label">Landmarks:</span> <span class="val" id="landmarks">0</span></span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="date-clock" id="clock">--</div>
+    </div>
+  </header>
+
+  <!-- TOP ALERT BANNER -->
+  <div class="alert-banner" id="alertBanner">
+    <span class="alert-icon">⚠️</span>
+    <span class="alert-content" id="alertText">INITIALIZING SYSTEM HEALTH CHECK...</span>
+  </div>
+
+  <!-- MAIN SECTION -->
+  <main class="main-content">
+    
+    <!-- LEFT SIDE: Live camera feed and statistics -->
+    <section class="left-section">
+      <div class="camera-card">
+        <div class="camera-header">
+          <h3>Live Face Analysis Feed</h3>
+          <div class="rec-badge">
+            <span class="rec-dot"></span>
+            <span>REC STREAM</span>
+          </div>
+        </div>
+        <div class="video-container">
+          <div class="camera-error-banner hidden" id="cameraErrorBanner">
+            <span class="cam-err-icon">⚠</span>
+            <p class="cam-err-text" id="cameraErrorText">Camera not detected — close other apps using the camera and check Windows camera privacy settings</p>
+          </div>
+          <img id="faceImg" src="" alt="Live Telemetry Feed">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-mini-card">
+          <div class="m-label">Landmarks Detected</div>
+          <div class="m-val blue" id="st-lm">468</div>
+        </div>
+        <div class="metric-mini-card">
+          <div class="m-label">Face Symmetry</div>
+          <div class="m-val green" id="st-sym">98.5%</div>
+        </div>
+        <div class="metric-mini-card">
+          <div class="m-label">Head Pose</div>
+          <div class="m-val blue">Frontal</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDE: Tabbed Analysis Dashboard -->
+    <section class="right-section">
+      
+      <!-- Nav Tabs -->
+      <nav class="nav-tabs">
+        <button class="tab-btn active" id="tab-skin" onclick="showTab('skin')">
+          <span class="tab-icon">🧬</span> Skin
+        </button>
+        <button class="tab-btn" id="tab-eyes" onclick="showTab('eyes')">
+          <span class="tab-icon">◉</span> Eyes
+        </button>
+        <button class="tab-btn" id="tab-nose" onclick="showTab('nose')">
+          <span class="tab-icon">◈</span> Nose
+        </button>
+        <button class="tab-btn" id="tab-lips" onclick="showTab('lips')">
+          <span class="tab-icon">👄</span> Lips
+        </button>
+        <button class="tab-btn" id="tab-overall" onclick="showTab('overall')">
+          <span class="tab-icon">📊</span> Overall
+        </button>
+      </nav>
+
+      <!-- Category Detail Cards -->
+      <div class="tab-contents">
+
+        <!-- 1. Skin Analysis Card -->
+        <article class="detail-card active" id="card-skin">
+          <h2 class="card-headline">Skin Disease Analysis</h2>
+          <p class="card-subtitle">AI-powered skin condition scanner & classifier</p>
+          
+          <div class="skin-result-box">
+            <h3 class="skin-disease-name" id="skinDisease">Analyzing...</h3>
+            <div class="skin-meta-row">
+              <span class="conf-text" id="skinConf">Confidence: 0%</span>
+              <span class="badge" id="flag-mel">CLEAR</span>
+            </div>
+          </div>
+
+          <div class="recommendation-panel">
+            <div class="rec-title">Actionable Recommendation</div>
+            <p class="rec-text" id="skinRec">Conducting initial diagnostics. Standby for AI assessment...</p>
+          </div>
+
+          <div class="score-distribution-section">
+            <h4 class="section-title">Score Distribution (Class Probability)</h4>
+            <div class="horizontal-score-bars" id="scoreBars">
+              <!-- Dynamically populated from SocketIO -->
+            </div>
+          </div>
+        </article>
+
+        <!-- 2. Eyes Analysis Card -->
+        <article class="detail-card hidden" id="card-eyes">
+          <h2 class="card-headline">Eye Analysis</h2>
+          <p class="card-subtitle">Fatigue detection & color metrics</p>
+
+          <div class="vital-rows">
+            <div class="vital-row">
+              <span class="v-label">Fatigue Level</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-fatigue" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-fatigue">0%</span>
+            </div>
+            
+            <div class="vital-row">
+              <span class="v-label">Sclera Redness</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-redness" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-redness">Low</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Eye Symmetry</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-sym" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-sym">0%</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Jaundice Sign</span>
+              <span class="badge" id="val-jaundice">NOT DETECTED</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Dark Circles</span>
+              <span class="badge" id="val-dark">NONE</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Puffiness</span>
+              <span class="badge green">NORMAL</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Eyelid Droop</span>
+              <span class="badge green">NONE</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Blink Rate</span>
+              <span class="v-value text-blue">16 / min</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3. Nose Analysis Card -->
+        <article class="detail-card hidden" id="card-nose">
+          <h2 class="card-headline">Nose Analysis</h2>
+          <p class="card-subtitle">Pore structure & blood flow indicators</p>
+
+          <div class="vital-rows">
+            <div class="vital-row">
+              <span class="v-label">Nose Redness</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-nose-red" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-nose-red">Low</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Nose Symmetry</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-nose-sym" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-nose-sym">0%</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Pore Size</span>
+              <span class="badge" id="val-pore">Normal</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Blackheads</span>
+              <span class="badge" id="val-black">NONE</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Color Shift</span>
+              <span class="badge" id="val-ncolor">Normal</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 4. Lips Analysis Card -->
+        <article class="detail-card hidden" id="card-lips">
+          <h2 class="card-headline">Lip Analysis</h2>
+          <p class="card-subtitle">Cyanosis & oxygenation mapping</p>
+
+          <div class="vital-rows">
+            <div class="vital-row">
+              <span class="v-label">Lip Symmetry</span>
+              <div class="bar-track">
+                <div class="bar-fill" id="bar-lip-sym" style="width:0%"></div>
+              </div>
+              <span class="v-value" id="val-lip-sym">0%</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Lip Color</span>
+              <span class="v-value text-blue" id="val-lipcolor">Normal</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Pallor (Anemia)</span>
+              <span class="badge" id="val-pallor">NONE</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Cyanosis (Hypoxia)</span>
+              <span class="badge" id="val-cyan">NOT DETECTED</span>
+            </div>
+
+            <div class="vital-row">
+              <span class="v-label">Dryness Level</span>
+              <span class="badge" id="val-dry">None</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 5. Overall & Sensors Card -->
+        <article class="detail-card hidden" id="card-overall">
+          <h2 class="card-headline">Overall Patient Condition</h2>
+          <p class="card-subtitle">Aggregated vitals and diagnostic summaries</p>
+
+          <!-- Raw Sensor Vitals Grid -->
+          <div class="sensor-val-grid">
+            <div class="sensor-pill">
+              <span class="sp-lbl">Heart Rate</span>
+              <span class="sp-val" id="val-hr">72 bpm</span>
+              <span class="badge green" id="badge-tachy">NONE</span>
+            </div>
+            <div class="sensor-pill">
+              <span class="sp-lbl">SpO2 Oxygen</span>
+              <span class="sp-val" id="val-spo2">98%</span>
+              <span class="badge green">GOOD</span>
+            </div>
+            <div class="sensor-pill">
+              <span class="sp-lbl">Body Temp</span>
+              <span class="sp-val" id="val-temp">36.7 °C</span>
+              <span class="badge green" id="badge-fever">CLEAR</span>
+            </div>
+            <div class="sensor-pill">
+              <span class="sp-lbl">Vibration</span>
+              <span class="sp-val" id="val-vibration">0.0 kPa</span>
+              <span class="badge green">STABLE</span>
+            </div>
+          </div>
+
+          <!-- SLM Summary Box -->
+          <div class="slm-report-box">
+            <h4 class="report-header">🧠 AI Summary Report (Phi-3 Mini)</h4>
+            <p class="report-text" id="reportText">Analyzing telemetry packets. Synthesizing medical findings...</p>
+          </div>
+
+          <!-- Additional Info Card: Forehead -->
+          <div class="forehead-subcard">
+            <h4 class="subcard-title">Forehead & Face Diagnostics</h4>
+            <div class="vital-row">
+              <span class="v-label">Stress Lines</span>
+              <span class="v-value text-amber">Low (40%)</span>
+            </div>
+            <div class="vital-row">
+              <span class="v-label">Hydration Score</span>
+              <span class="v-value text-green">72%</span>
+            </div>
+            <div class="vital-row">
+              <span class="v-label">T-Zone Sebum</span>
+              <span class="v-value text-amber">Moderate</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM STATUS BAR -->
+  <footer class="footer">
+    <div class="f-item">
+      <span class="f-label">SYS STATUS:</span>
+      <span class="f-val text-green">GOOD</span>
+    </div>
+    <div class="f-item">
+      <span class="f-label">FPS:</span>
+      <span class="f-val text-blue" id="b-fps">0</span>
+    </div>
+    <div class="f-item">
+      <span class="f-label">LANDMARKS:</span>
+      <span class="f-val text-blue" id="b-lm">468</span>
+    </div>
+    <div class="f-item">
+      <span class="f-label">RED ALERTS:</span>
+      <span class="f-val text-green" id="b-alerts">0</span>
+    </div>
+    <div class="f-item">
+      <span class="f-label">INTERFACE VERSION:</span>
+      <span class="f-val">v3.2 — Medical Standard</span>
+    </div>
+  </footer>
+
+  <script>
+    // Simple tab toggling function
+    function showTab(tabName) {
+      // Hide all detail cards
+      document.querySelectorAll('.detail-card').forEach(card => {
+        card.classList.add('hidden');
+        card.classList.remove('active');
+      });
+      // Show selected card
+      const targetCard = document.getElementById('card-' + tabName);
+      if (targetCard) {
+        targetCard.classList.remove('hidden');
+        targetCard.classList.add('active');
+      }
+
+      // Deactivate all tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      // Activate clicked button
+      const targetBtn = document.getElementById('tab-' + tabName);
+      if (targetBtn) {
+        targetBtn.classList.add('active');
+      }
+    }
+  </script>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirror Analyzer - Medical Report</title>
+    <link rel="stylesheet" href="/static/css/style_medical.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-content">
+        <div class="header-left">
+            <h1 class="header-title">Mirror Analyzer</h1>
+            <p class="header-subtitle">AI-Powered Health Monitoring System</p>
+        </div>
+        <div class="header-right">
+            <div class="header-stat">
+                <span class="stat-label">Session Time:</span>
+                <span class="stat-value" id="sessionTime">00:00:00</span>
+            </div>
+            <div class="header-stat">
+                <span class="stat-label">Status:</span>
+                <span class="stat-value status-active" id="status">ACTIVE</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ALERT BANNER -->
+<div class="alert-banner" id="alertBanner">
+    <span class="alert-text" id="alertText">Initializing...</span>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+    
+    <!-- LEFT PANEL: LIVE FEED -->
+    <div class="left-panel">
+        <div class="feed-container">
+            <div class="feed-header">
+                <h2>Live Face Analysis</h2>
+                <div class="rec-indicator">
+                    <span class="rec-dot"></span>
+                    <span class="rec-text">REC</span>
+                </div>
+            </div>
+            <img id="faceImg" src="" alt="Live Feed" class="face-image">
+            <div class="feed-stats">
+                <div class="feed-stat">
+                    <span class="feed-stat-label">FPS</span>
+                    <span class="feed-stat-value" id="fps">0</span>
+                </div>
+                <div class="feed-stat">
+                    <span class="feed-stat-label">Landmarks</span>
+                    <span class="feed-stat-value" id="landmarks">0</span>
+                </div>
+                <div class="feed-stat">
+                    <span class="feed-stat-label">Alerts</span>
+                    <span class="feed-stat-value" id="alertCount">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL: REPORT -->
+    <div class="right-panel">
+        
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="skin">
+                <span class="tab-icon">🔬</span>
+                <span>Skin</span>
+            </button>
+            <button class="tab-button" data-tab="eyes">
+                <span class="tab-icon">👁️</span>
+                <span>Eyes</span>
+            </button>
+            <button class="tab-button" data-tab="nose">
+                <span class="tab-icon">👃</span>
+                <span>Nose</span>
+            </button>
+            <button class="tab-button" data-tab="lips">
+                <span class="tab-icon">👄</span>
+                <span>Lips</span>
+            </button>
+            <button class="tab-button" data-tab="overall">
+                <span class="tab-icon">📊</span>
+                <span>Overall</span>
+            </button>
+        </div>
+
+        <!-- TAB CONTENTS -->
+        <div class="tab-content">
+
+            <!-- SKIN TAB -->
+            <div class="tab-pane active" id="tab-skin">
+                <div class="report-card">
+                    <h3 class="report-title">Skin Disease Analysis</h3>
+                    
+                    <div class="disease-section">
+                        <div class="disease-name" id="skinDisease">Analyzing...</div>
+                        <div class="confidence-row">
+                            <span class="confidence-label">Confidence:</span>
+                            <span class="confidence-value" id="skinConfidence">0%</span>
+                        </div>
+                        <div class="urgency-badge" id="urgencyBadge">
+                            <span id="urgencyText">Normal</span>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <h4>Recommendation:</h4>
+                        <p id="skinRecommendation">Consultation based on analysis</p>
+                    </div>
+
+                    <div class="score-breakdown">
+                        <h4>Score Distribution:</h4>
+                        <div id="scoreList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EYES TAB -->
+            <div class="tab-pane" id="tab-eyes">
+                <div class="report-card">
+                    <h3 class="report-title">Eye Health Analysis</h3>
+                    
+                    <div class="metric-group">
+                        <div class="metric-row">
+                            <span class="metric-label">Fatigue Level</span>
+                            <div class="metric-bar">
+                                <div class="bar-fill" id="eyeFatigueBar" style="width:0%"></div>
+                            </div>
+                            <span class="metric-value" id="eyeFatigueVal">Low</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Redness</span>
+                            <div class="metric-bar">
+                                <div class="bar-fill" id="eyeRednessBar" style="width:0%"></div>
+                            </div>
+                            <span class="metric-value" id="eyeRednessVal">Low</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Dark Circles</span>
+                            <span class="badge" id="darkCirclesBadge">None Detected</span>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <h4>Advice:</h4>
+                        <p id="eyeRecommendation">Regular eye health maintenance recommended</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOSE TAB -->
+            <div class="tab-pane" id="tab-nose">
+                <div class="report-card">
+                    <h3 class="report-title">Nasal Health Analysis</h3>
+                    
+                    <div class="metric-group">
+                        <div class="metric-row">
+                            <span class="metric-label">Redness Level</span>
+                            <div class="metric-bar">
+                                <div class="bar-fill" id="noseRednessBar" style="width:0%"></div>
+                            </div>
+                            <span class="metric-value" id="noseRednessVal">Low</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Pore Size</span>
+                            <span class="badge" id="poreSizeBadge">Normal</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Blackheads</span>
+                            <span class="badge" id="blackheadsBadge">None</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Color Change</span>
+                            <span class="badge" id="noseColorBadge">Normal</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Symmetry</span>
+                            <div class="metric-bar">
+                                <div class="bar-fill" id="noseSymmetryBar" style="width:0%"></div>
+                            </div>
+                            <span class="metric-value" id="noseSymmetryVal">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIPS TAB -->
+            <div class="tab-pane" id="tab-lips">
+                <div class="report-card">
+                    <h3 class="report-title">Lip Health Analysis</h3>
+                    
+                    <div class="metric-group">
+                        <div class="metric-row">
+                            <span class="metric-label">Color</span>
+                            <span class="badge" id="lipColorBadge">Normal</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Cyanosis</span>
+                            <span class="badge" id="cyanosisBadge">Not Detected</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Pallor</span>
+                            <span class="badge" id="pallorBadge">Not Detected</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Dryness</span>
+                            <span class="badge" id="drynessBadge">None</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <span class="metric-label">Symmetry</span>
+                            <div class="metric-bar">
+                                <div class="bar-fill" id="lipSymmetryBar" style="width:0%"></div>
+                            </div>
+                            <span class="metric-value" id="lipSymmetryVal">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <h4>Care Tips:</h4>
+                        <p id="lipRecommendation">Maintain lip hydration and sun protection</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OVERALL TAB -->
+            <div class="tab-pane" id="tab-overall">
+                <div class="report-card">
+                    <h3 class="report-title">Overall Health Summary</h3>
+                    
+                    <div class="health-score-section">
+                        <div class="health-score-circle">
+                            <svg viewBox="0 0 100 100" class="score-ring">
+                                <circle cx="50" cy="50" r="45" class="score-ring-bg"/>
+                                <circle cx="50" cy="50" r="45" class="score-ring-fill" id="scoreRing"/>
+                            </svg>
+                            <div class="score-number" id="healthScore">--</div>
+                        </div>
+                        <div class="score-text">Overall Health Score</div>
+                    </div>
+
+                    <div class="phi3-report">
+                        <h4>📋 AI Health Report (Phi-3)</h4>
+                        <p id="phi3Text">Initializing analysis engine...</p>
+                    </div>
+
+                    <div class="alert-section">
+                        <h4>🚨 System Alerts</h4>
+                        <div id="alertsList"></div>
+                    </div>
+
+                    <div class="face-stats-section">
+                        <div class="face-stat-item">
+                            <span class="face-stat-label">Face Symmetry</span>
+                            <span class="face-stat-value" id="faceSymmetryVal">0%</span>
+                        </div>
+                        <div class="face-stat-item">
+                            <span class="face-stat-label">Landmarks Detected</span>
+                            <span class="face-stat-value" id="landmarksDetected">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-content">
+        <span class="footer-stat"><strong>FPS:</strong> <span id="footerFps">0</span></span>
+        <span class="footer-stat"><strong>System Status:</strong> <span id="footerStatus" class="status-good">Good</span></span>
+        <span class="footer-stat"><strong>Session:</strong> <span id="sessionId">Active</span></span>
+        <span class="footer-credit">Mirror Analyzer v2.0 - Medical Report Theme</span>
+    </div>
+</footer>
+
+<script src="/static/js/main_medical.js"></script>
+
+</body>
+</html>

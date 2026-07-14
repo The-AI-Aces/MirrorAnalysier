@@ -1,0 +1,10 @@
+tensorflow
+opencv-python
+mediapipe
+numpy
+pillow
+scikit-learn
+flask
+flask-socketio
+eventlet
+ollama

@@ -1,0 +1,711 @@
+/* ==========================================================================
+   Mirror Analyzer Pro — White & Blue Theme CSS Stylesheet
+   ========================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  
+  --primary-gradient: linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%);
+  --blue-solid: #2563EB;
+  --blue-light: #EFF6FF;
+  --blue-border: #DBEAFE;
+  
+  --green: #22C55E;
+  --green-light: #DCFCE7;
+  --green-border: #BBF7D0;
+  
+  --amber: #F59E0B;
+  --amber-light: #FEF3C7;
+  --amber-border: #FDE68A;
+  
+  --red: #EF4444;
+  --red-light: #FEE2E2;
+  --red-border: #FECACA;
+  
+  --border-color: #E2E8F0;
+  --track-color: #F1F5F9;
+  
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 1. HEADER BAR ──────────────────────────────────────────────────────── */
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.logo-accent {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  background: var(--green-light);
+  border: 1px solid var(--green-border);
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  gap: 6px;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.header-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.stat-item .label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-item .val {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.date-clock {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ── 2. ALERT BANNER ────────────────────────────────────────────────────── */
+.alert-banner {
+  background: var(--blue-light);
+  border-bottom: 1px solid var(--blue-border);
+  color: var(--blue-solid);
+  padding: 6px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.alert-banner.red {
+  background: var(--red-light);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
+/* ── 3. MAIN SECTION GRID ───────────────────────────────────────────────── */
+.main-content {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr;
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.left-section::-webkit-scrollbar,
+.right-section::-webkit-scrollbar {
+  width: 6px;
+}
+.left-section::-webkit-scrollbar-thumb,
+.right-section::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── 4. CAMERA VIEW ─────────────────────────────────────────────────────── */
+.camera-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.camera-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.camera-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rec-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--red);
+  background: var(--red-light);
+  padding: 2px 8px;
+  border-radius: 50px;
+}
+
+.rec-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--red);
+  border-radius: 50%;
+  animation: pulse 1s infinite alternate;
+}
+
+.video-container {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Tech HUD corners for camera container */
+.corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--blue-solid);
+}
+.corner.tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
+.corner.tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 8px; left: 8px; border-right: none; border-top: none; }
+.corner.br { bottom: 8px; right: 8px; border-left: none; border-top: none; }
+
+/* Metrics Mini Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.metric-mini-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.m-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.m-val {
+  font-size: 16px;
+  font-weight: 800;
+}
+.m-val.blue { color: var(--blue-solid); }
+.m-val.green { color: var(--green); }
+
+/* ── 5. TABBED NAVIGATION ───────────────────────────────────────────────── */
+.nav-tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 6px;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tab-btn.active {
+  background: var(--primary-gradient);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+.tab-btn:hover:not(.active) {
+  background: var(--track-color);
+  color: var(--text-primary);
+}
+
+/* ── 6. DETAIL CARDS ────────────────────────────────────────────────────── */
+.tab-contents {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  transition: opacity 0.2s ease;
+}
+
+.detail-card.hidden {
+  display: none !important;
+}
+
+.card-headline {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: -12px;
+  margin-bottom: 4px;
+}
+
+/* Skin Result Layout */
+.skin-result-box {
+  background: var(--track-color);
+  border-radius: 10px;
+  padding: 16px;
+  border-left: 4px solid var(--blue-solid);
+}
+
+.skin-disease-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.skin-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.conf-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Recommendation Box */
+.recommendation-panel {
+  background: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.rec-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-solid);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rec-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* ── 7. DETAILED ROWS (EYES, LIPS, NOSE) ────────────────────────────────── */
+.vital-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vital-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.v-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 140px;
+}
+
+.v-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.v-value.text-blue { color: var(--blue-solid); }
+.v-value.text-green { color: var(--green); }
+.v-value.text-amber { color: var(--amber); }
+
+/* Progress tracks inside rows */
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--track-color);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 16px;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 10px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* Badges */
+.badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 50px;
+  text-transform: uppercase;
+}
+
+.badge.green {
+  background: var(--green-light);
+  color: var(--green);
+  border: 1px solid var(--green-border);
+}
+
+.badge.yellow {
+  background: var(--amber-light);
+  color: var(--amber);
+  border: 1px solid var(--amber-border);
+}
+
+.badge.red {
+  background: var(--red-light);
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
+/* ── 8. OVERALL PANEL & SENSORS ─────────────────────────────────────────── */
+.sensor-val-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.sensor-pill {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sp-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sp-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.slm-report-box {
+  background: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.report-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue-solid);
+  margin-bottom: 6px;
+}
+
+.report-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.forehead-subcard {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.subcard-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+/* ── 9. SCORE DISTRIBUTION PROGRESS BARS ───────────────────────────────── */
+.score-distribution-section {
+  margin-top: 8px;
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.horizontal-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.score-dist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.score-dist-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-dist-track {
+  flex: 1;
+  height: 6px;
+  background: var(--track-color);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.score-dist-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: 10px;
+  width: 0%;
+}
+
+.score-dist-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  width: 32px;
+  text-align: right;
+}
+
+/* ── 10. BOTTOM FOOTER STATUS BAR ───────────────────────────────────────── */
+.footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  height: 40px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.f-item {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.f-label {
+  color: var(--text-secondary);
+}
+
+.f-val {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.f-val.text-green { color: var(--green); }
+.f-val.text-blue { color: var(--blue-solid); }
+
+/* ── 11. RESPONSIVENESS AND SCALE ───────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .camera-card {
+    height: 380px;
+  }
+}
+
+.camera-error-banner {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--red-light);
+  border: 2px solid var(--red-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.camera-error-banner.hidden {
+  display: none !important;
+}
+
+.cam-err-icon {
+  font-size: 32px;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+
+.cam-err-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+  line-height: 1.6;
+}

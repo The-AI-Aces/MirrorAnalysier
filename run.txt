@@ -1,0 +1,4 @@
+cd D:\Final_Mirror_Analyzer
+mirror_env\Scripts\activate
+python app_medical.py
+Open: http://localhost:5001
