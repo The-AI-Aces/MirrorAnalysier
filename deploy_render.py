@@ -65,23 +65,74 @@ def main():
     owner_name = owners[0]['owner']['name']
     print(f"Authenticated successfully as: {owner_name} (ID: {owner_id})")
     
-    repo_url = "https://github.com/The-AI-Aces/MirrorAnalysier.git"
-    service_name = "mirror-analyzer"
+    repo_url = "https://github.com/The-AI-Aces/MirrorAnalysier"
+    repo_url_git = repo_url + ".git"
     
-    # Check if a service with this name already exists
+    # Check if a service with this name or repo already exists
     print("Checking if service already exists...")
-    status, services = make_request("https://api.render.com/v1/services?limit=20", headers=headers)
+    status, services = make_request("https://api.render.com/v1/services?limit=50", headers=headers)
     existing_service = None
     if status == 200:
         for s in services:
-            if s['service']['name'] == service_name:
-                existing_service = s['service']
+            svc = s['service']
+            name_match = svc['name'].lower() in ["mirror-analyzer", "mirroranalysier"]
+            repo_match = svc['repo'].lower() in [repo_url.lower(), repo_url_git.lower()]
+            if name_match or repo_match:
+                existing_service = svc
                 break
                 
     if existing_service:
         service_id = existing_service['id']
-        live_url = existing_service['url']
-        print(f"Service '{service_name}' already exists (ID: {service_id}). URL: {live_url}")
+        live_url = existing_service.get('url', '') or existing_service.get('serviceDetails', {}).get('url', '')
+        print(f"Service matched (ID: {service_id}). URL: {live_url}")
+        
+        # Make sure the start command and build commands are correct!
+        print("Updating build and start commands for TFLite compatibility...")
+        patch_body = {
+            "serviceDetails": {
+                "envSpecificDetails": {
+                    "buildCommand": "pip install -r requirements.txt",
+                    "startCommand": "python app_medical.py"
+                }
+            }
+        }
+        update_status, update_res = make_request(
+            f"https://api.render.com/v1/services/{service_id}",
+            method="PATCH",
+            headers=headers,
+            body=patch_body
+        )
+        if update_status == 200:
+            print("Successfully updated service start/build commands.")
+        else:
+            print(f"Warning: Failed to update commands via API: {update_res}")
+
+        # Update environment variables to pin Python version
+        print("Updating Render environment variables to set PYTHON_VERSION=3.11.11...")
+        env_status, env_vars = make_request(f"https://api.render.com/v1/services/{service_id}/env-vars", headers=headers)
+        if env_status == 200:
+            vars_list = [v['envVar'] for v in env_vars]
+            found = False
+            for v in vars_list:
+                if v['key'] == 'PYTHON_VERSION':
+                    v['value'] = '3.11.11'
+                    found = True
+                    break
+            if not found:
+                vars_list.append({'key': 'PYTHON_VERSION', 'value': '3.11.11'})
+            
+            # Put env vars back
+            put_status, put_res = make_request(
+                f"https://api.render.com/v1/services/{service_id}/env-vars",
+                method="PUT",
+                headers=headers,
+                body=vars_list
+            )
+            if put_status == 200:
+                print("Successfully updated environment variables.")
+            else:
+                print(f"Warning: Failed to set environment variables: {put_res}")
+
         print("Triggering a new deployment to push the latest changes...")
         deploy_status, deploy_res = make_request(
             f"https://api.render.com/v1/services/{service_id}/deploys",
@@ -93,37 +144,8 @@ def main():
             print(f"Failed to trigger deploy: {deploy_res}")
             sys.exit(1)
     else:
-        print(f"Creating new Web Service '{service_name}' on Render...")
-        service_body = {
-            "type": "web_service",
-            "name": service_name,
-            "ownerId": owner_id,
-            "repo": repo_url,
-            "branch": "main",
-            "autoDeploy": "yes",
-            "serviceDetails": {
-                "env": "python",
-                "planId": "free",
-                "envSpecificDetails": {
-                    "buildCommand": "pip install -r requirements.txt",
-                    "startCommand": "python app_medical.py"
-                }
-            }
-        }
-        status, create_res = make_request(
-            "https://api.render.com/v1/services",
-            method="POST",
-            headers=headers,
-            body=service_body
-        )
-        if status not in [200, 201]:
-            print(f"Error creating Web Service: {create_res}")
-            sys.exit(1)
-            
-        service_id = create_res['service']['id']
-        live_url = create_res['service']['url']
-        print(f"Web Service created successfully (ID: {service_id})!")
-        print(f"Service Live URL will be: {live_url}")
+        print("[ERROR] Service does not exist. Please create the service manually on Render first to avoid payment checks.")
+        sys.exit(1)
 
     # Poll deployment status
     print("\nMonitoring deployment status...")
