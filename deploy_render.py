@@ -103,9 +103,11 @@ def main():
             "autoDeploy": "yes",
             "serviceDetails": {
                 "env": "python",
-                "buildCommand": "pip install -r requirements.txt",
-                "startCommand": "python app_medical.py",
-                "planId": "free"
+                "planId": "free",
+                "envSpecificDetails": {
+                    "buildCommand": "pip install -r requirements.txt",
+                    "startCommand": "python app_medical.py"
+                }
             }
         }
         status, create_res = make_request(
