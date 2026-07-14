@@ -299,3 +299,72 @@ socket.on('connect', () => {
 socket.on('disconnect', () => {
     console.log('Disconnected from server');
 });
+
+let localStream = null;
+let clientFrameInterval = null;
+
+function startLocalWebcam() {
+    const video = document.getElementById('localVideo');
+    const faceImg = document.getElementById('faceImg');
+    if (!video) return;
+    
+    if (faceImg) faceImg.style.display = 'none';
+    video.style.display = 'block';
+    
+    if (localStream) return;
+    
+    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+        .then(stream => {
+            localStream = stream;
+            video.srcObject = stream;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 240;
+            const ctx = canvas.getContext('2d');
+            
+            clientFrameInterval = setInterval(() => {
+                if (socket.connected) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const dataURL = canvas.toDataURL('image/jpeg', 0.6);
+                    socket.emit('client_frame', dataURL);
+                }
+            }, 600);
+        })
+        .catch(err => {
+            console.error("Failed to open local webcam:", err);
+        });
+}
+
+function stopLocalWebcam() {
+    if (clientFrameInterval) {
+        clearInterval(clientFrameInterval);
+        clientFrameInterval = null;
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    const video = document.getElementById('localVideo');
+    const faceImg = document.getElementById('faceImg');
+    if (video) video.style.display = 'none';
+    if (faceImg) faceImg.style.display = 'block';
+}
+
+socket.on('camera_status', (status) => {
+    const banner = document.getElementById('alertBanner');
+    const text = document.getElementById('alertText');
+    if (!status.connected) {
+        if (banner) {
+            banner.className = 'alert-banner warning';
+            text.textContent = 'Server camera offline. Running client-side browser webcam scanning...';
+        }
+        startLocalWebcam();
+    } else {
+        if (banner && banner.className.includes('warning')) {
+            banner.className = 'alert-banner';
+            text.textContent = '✓ All systems normal';
+        }
+        stopLocalWebcam();
+    }
+});

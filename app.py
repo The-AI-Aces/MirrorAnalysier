@@ -5,7 +5,7 @@ import threading
 import time
 import numpy as np
 import ollama
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
 import os
@@ -287,9 +287,167 @@ def update_sensors():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+def generate_fallback_report(r):
+    try:
+        disease = r['skin']['disease']
+        conf = r['skin']['confidence']
+        fatigue = r['eyes']['fatigue']
+        redness = r['eyes']['redness']
+        lip_color = r['lips']['lip_color']
+        cyanosis = r['lips']['cyanosis']
+        symmetry = r['face']['symmetry']
+        
+        parts = []
+        if r['skin']['urgent']:
+            parts.append(f"Visual inspection indicates a potential skin condition ({disease}, {conf:.1f}% confidence) requiring direct clinical evaluation.")
+        else:
+            parts.append(f"Skin assessment identifies {disease} ({conf:.1f}% confidence), with no urgent flags detected.")
+            
+        eye_status = "mild eye fatigue" if fatigue else "normal eye appearance"
+        lip_status = "cyanotic indications" if cyanosis else f"{lip_color.lower()} lip color"
+        parts.append(f"Ocular scans show {eye_status} (redness {redness:.1f}%), while oral scans indicate {lip_status} with facial symmetry at {symmetry:.1f}%.")
+        
+        return " ".join(parts)
+    except:
+        return "Analysis complete."
+
 @socket.on('connect')
 def handle_connect():
     socket.emit('camera_status', camera_status)
+
+@socket.on('client_frame')
+def handle_client_frame(data_url):
+    try:
+        # Decode base64 image
+        header, encoded = data_url.split(",", 1)
+        img_data = base64.b64decode(encoded)
+        np_img = np.frombuffer(img_data, dtype=np.uint8)
+        frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        
+        if frame is None:
+            return
+            
+        # Run health analyzer
+        results = analyzer.analyze(frame)
+        
+        # Check alerts
+        alerts = results.get('alerts', [])
+        
+        # Generate summary report (using fallback if Ollama is not running)
+        client_report = "Analyzing..."
+        try:
+            prompt = (
+                f"Health scan: "
+                f"Face symmetry {results['face']['symmetry']:.0f}%, "
+                f"Skin: {results['skin']['disease']} "
+                f"({results['skin']['confidence']:.0f}% confidence), "
+                f"Eye fatigue: {results['eyes']['fatigue']}, "
+                f"Lip color: {results['lips']['lip_color']}, "
+                f"Alerts: {len(results['alerts'])}. "
+                f"Write 2 sentences health summary "
+                f"in plain professional English."
+            )
+            resp = ollama.chat(
+                model='phi3:mini',
+                messages=[{
+                    'role': 'user',
+                    'content': prompt
+                }],
+                options={'num_predict': 35, 'temperature': 0.3, 'num_ctx': 256, 'num_thread': 4}
+            )
+            raw = resp['message']['content']
+            sentences = raw.replace('\n',' ').split('.')
+            client_report = '. '.join(
+                sentences[:2]).strip() + '.'
+        except Exception:
+            client_report = generate_fallback_report(results)
+            
+        fps = 15.0 # Client-side streaming simulated FPS
+        
+        skin   = results.get('skin',  {})
+        eyes   = results.get('eyes',  {})
+        lips   = results.get('lips',  {})
+        nose   = results.get('nose',  {})
+        face   = results.get('face',  {})
+        
+        raw_scores = skin.get('all_scores', {})
+        clean_scores = {
+            safe_str(k): round(safe_float(v), 1)
+            for k, v in raw_scores.items()
+        }
+        
+        data = {
+            'fps'   : round(safe_float(fps), 1),
+            'report': safe_str(client_report),
+            'face': {
+                'symmetry' : round(safe_float(
+                    face.get('symmetry', 0)), 1),
+                'landmarks': int(len(
+                    face.get('points', {}))),
+            },
+            'skin': {
+                'disease'   : safe_str(
+                    skin.get('disease', '')),
+                'confidence': round(safe_float(
+                    skin.get('confidence', 0)), 1),
+                'urgent'    : safe_bool(
+                    skin.get('urgent', False)),
+                'scores'    : clean_scores,
+            },
+            'eyes': {
+                'fatigue'      : safe_bool(
+                    eyes.get('fatigue', False)),
+                'fatigue_score': round(safe_float(
+                    eyes.get('fatigue_score', 0)), 1),
+                'redness'      : round(safe_float(
+                    eyes.get('redness', 0)), 1),
+                'dark_circles' : safe_bool(
+                    eyes.get('dark_circles', False)),
+            },
+            'lips': {
+                'lip_color': safe_str(
+                    lips.get('lip_color', 'Normal')),
+                'cyanosis' : safe_bool(
+                    lips.get('cyanosis', False)),
+                'pallor'   : safe_bool(
+                    lips.get('pallor', False)),
+                'dryness'  : safe_bool(
+                    lips.get('dryness', False)),
+                'symmetry' : round(safe_float(
+                    lips.get('symmetry', 0)), 1),
+            },
+            'nose': {
+                'redness'     : round(safe_float(
+                    nose.get('redness', 0)), 1),
+                'pore_size'   : safe_str(
+                    nose.get('pore_size', 'Normal')),
+                'blackheads'  : safe_bool(
+                    nose.get('blackheads', False)),
+                'color_change': safe_str(
+                    nose.get('color_change',
+                             'Normal')),
+                'symmetry'    : round(safe_float(
+                    nose.get('symmetry', 0)), 1),
+            },
+            'alerts': [
+                {
+                    'level'  : safe_str(a['level']),
+                    'message': safe_str(a['message'])
+                }
+                for a in alerts
+            ],
+            'sensors': {
+                'temperature': latest_sensor_data['temperature'],
+                'heart_rate' : latest_sensor_data['heart_rate'],
+                'spo2'       : latest_sensor_data['spo2'],
+                'hrv'        : latest_sensor_data['hrv'],
+                'vibration'  : f"{latest_sensor_data['vibration']:.1f} kPa",
+            }
+        }
+        
+        socket.emit('health_data', data, room=request.sid)
+    except Exception as e:
+        print(f"Error processing client frame: {e}")
 
 if __name__ == '__main__':
     t = threading.Thread(
@@ -320,5 +478,6 @@ if __name__ == '__main__':
     print("  Dashboard URL     : http://localhost:5000")
     print("="*60 + "\n")
     
+    port = int(os.environ.get('PORT', 5000))
     socket.run(app, host='0.0.0.0',
-               port=5000, debug=False, allow_unsafe_werkzeug=True)
+               port=port, debug=False, allow_unsafe_werkzeug=True)

@@ -1,3 +1,13 @@
+---
+title: Mirror Analyzer
+emoji: 🪞
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Mirror Analyzer
 ### AI-Powered Non-Contact Health Monitoring System
 
