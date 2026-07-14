@@ -16,7 +16,9 @@ class HealthAnalyzer:
         self.face    = FaceAnalyzer()
         import os
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(base_dir, 'model', 'skin_model_v2 (1).h5')
+        model_path = os.path.join(base_dir, 'model', 'skin_model_v2.tflite')
+        if not os.path.exists(model_path):
+            model_path = os.path.join(base_dir, 'model', 'skin_model_v2 (1).h5')
         if not os.path.exists(model_path):
             model_path = os.path.join(base_dir, 'model', 'skin_model_v2.h5')
         self.skin    = SkinDiseaseDetector(model_path)
